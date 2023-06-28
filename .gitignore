@@ -1,0 +1,10 @@
+/cache/
+__pycache__/
+/env/
+.gitignore
+
+/env/
+/.quarto/
+/posting1.html
+/posting1_files/
+.ipynb_checkpoints/posting1-checkpoint.ipynb

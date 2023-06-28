@@ -1,0 +1,11 @@
+doc-warnings: false
+max-line-length: 100
+
+pylint:
+  disable:
+    - use-dict-literal
+
+pycodestyle:
+  run: False
+  disable:
+    - N816

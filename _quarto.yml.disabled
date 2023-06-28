@@ -1,0 +1,9 @@
+project:
+  title: "WHR"
+  type: website
+  output-dir: docs
+  render:
+    - posting1.ipynb
+
+website:
+  search: false

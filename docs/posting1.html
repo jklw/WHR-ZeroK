@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.361">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Balancing uneven team games - An attempt at quantifying the advantage of the larger team</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="posting1_files/libs/clipboard/clipboard.min.js"></script>
+<script src="posting1_files/libs/quarto-html/quarto.js"></script>
+<script src="posting1_files/libs/quarto-html/popper.min.js"></script>
+<script src="posting1_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="posting1_files/libs/quarto-html/anchor.min.js"></script>
+<link href="posting1_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="posting1_files/libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="posting1_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="posting1_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="posting1_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="2">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-issue" id="toc-the-issue" class="nav-link active" data-scroll-target="#the-issue">The issue</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
+  <li><a href="#models" id="toc-models" class="nav-link" data-scroll-target="#models">Models</a>
+  <ul class="collapse">
+  <li><a href="#simple-adjusted-model" id="toc-simple-adjusted-model" class="nav-link" data-scroll-target="#simple-adjusted-model">Simple adjusted model</a></li>
+  <li><a href="#best-player-of-smaller-team---dependent-model" id="toc-best-player-of-smaller-team---dependent-model" class="nav-link" data-scroll-target="#best-player-of-smaller-team---dependent-model">Best Player of Smaller Team - dependent model</a></li>
+  <li><a href="#joint-models-vs-fixed-ratings-models" id="toc-joint-models-vs-fixed-ratings-models" class="nav-link" data-scroll-target="#joint-models-vs-fixed-ratings-models">Joint models vs fixed-ratings models</a></li>
+  <li><a href="#model-comparison" id="toc-model-comparison" class="nav-link" data-scroll-target="#model-comparison">Model comparison</a>
+  <ul class="collapse">
+  <li><a href="#joint-models" id="toc-joint-models" class="nav-link" data-scroll-target="#joint-models">Joint models</a></li>
+  <li><a href="#fixed-rating-models" id="toc-fixed-rating-models" class="nav-link" data-scroll-target="#fixed-rating-models">Fixed-rating models</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#implementation" id="toc-implementation" class="nav-link" data-scroll-target="#implementation">Implementation</a></li>
+  <li><a href="#sec-bg" id="toc-sec-bg" class="nav-link" data-scroll-target="#sec-bg">Background</a>
+  <ul class="collapse">
+  <li><a href="#bayes" id="toc-bayes" class="nav-link" data-scroll-target="#bayes">Bayes</a></li>
+  <li><a href="#sec-whr-like" id="toc-sec-whr-like" class="nav-link" data-scroll-target="#sec-whr-like">WHR’s likelihood function</a></li>
+  <li><a href="#sec-whr-prior" id="toc-sec-whr-prior" class="nav-link" data-scroll-target="#sec-whr-prior">WHR’s prior</a>
+  <ul class="collapse">
+  <li><a href="#first-day-rating" id="toc-first-day-rating" class="nav-link" data-scroll-target="#first-day-rating">First day rating</a></li>
+  <li><a href="#rating-change-between-days" id="toc-rating-change-between-days" class="nav-link" data-scroll-target="#rating-change-between-days">Rating change between days</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#top-100" id="toc-top-100" class="nav-link" data-scroll-target="#top-100">Top 100</a></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Balancing uneven team games - An attempt at quantifying the advantage of the larger team</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<!-- <style>
+.jp-RenderedMarkdown {
+    max-width: 43em;
+}
+</style> -->
+<section id="the-issue" class="level1 page-columns page-full">
+<h1>The issue</h1>
+<p>When balancing Zero-K team games with an odd number of players, the current balancer tries to find two teams with the same <em>average</em> member rating, without taking team size into account (for example, it thinks that a team of a 2500 Elo player and a 1500 Elo player vs a single 2000 Elo player is 50%). I tried find out how much of an advantage the larger team has, relative to the win rate predicted by WHR. The results indicate that the larger team does have a moderate advantage depending on team sizes and the exact model. Disclaimer: I’m using some of these tools for the first time.</p>
+<p>These findings, if correct, could be used to:</p>
+<ol type="1">
+<li><p>Balance uneven team games more accurately.</p></li>
+<li><p>When updating the ratings of the participants after the game, account for the team size effect. Everything else being equal, winning as a member of the small team is more surprising than winning as a member of the large team.</p></li>
+</ol>
+<p>The following plots show the advantage of the larger team in terms of extra Elo equivalent (see below for the difference between the two models shown. In short, the “jointly fitted” model corresponds to doing both 1. and 2. above, whereas the “Ratings fixed” model takes the unmodified WHR ratings as given and only tries to improve the predictions relative to that.)</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The plots represent Bayesian posterior probability densities; the probability that the value is in a given range is proportional to the shaded area over that range. The little circles are the means.</p>
+</div>
+</div>
+<div class="cell page-columns page-full" data-fig-label="fig-main-result" data-execution_count="148">
+<div class="cell-output cell-output-display column-page">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="posting1_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Main result</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>(Different x-axis scale for 1v2.)</p>
+<p>We see that there’s strong evidence that the advantage size is positive, but it is kind of disappointingly small.</p>
+<p>Note though that these advantages are applied after the usual averaging of team members, so for example for 3v4, an advantage of 100 means that a game with Elos [1300, 1000, 1000] vs [1000, 1000, 1000, 1000] would be fair (50%).</p>
+<p>I don’t have a theory yet on why the effect is so much larger for the joint model at some sizes.</p>
+</section>
+<section id="data" class="level1 page-columns page-full">
+<h1>Data</h1>
+<p>Thanks to <span class="citation" data-cites="malric">@malric</span> for providing the data on <a href="https://zero-k.info/Forum/Thread/34840?page=1">Zero-K Local Analysis</a>. I initially tried to include all casual-rated games, but then decided to use only games tagged <code>is_autohost_teams</code> and extend the time horizon instead (was reaching the limits of what my hardware can handle in reasonable time), so some of the following filters are probably redundant. I dropped games that:</p>
+<ul>
+<li>were not tagged as teams autohost games</li>
+<li>were noelo</li>
+<li>were FFA (either tagged so, or having team_ids different from 1 and 2)</li>
+<li>had chickens or bots or game mods</li>
+<li>were shorter than 20 seconds</li>
+<li>had no winners (exit?), or no losers somehow</li>
+<li>had a player count difference of more than 1 (should be impossible on autohost)</li>
+<li>were on a “special” map other than Dockside v2, which I heard actually isn’t special.</li>
+</ul>
+<p>The filtered dataset included 22150 games and 73858 PlayerDays from 2019 to May 2023, of which 7231 games were uneven-sized (a “PlayerDay” is a day, player pair on which that player played; WHR assigns a rating estimate to every PlayerDay). I actually downloaded the data back to 2017, but for some reason none of the 2017 or 2018 games passed the filter (further research is needed).</p>
+<p>I did not have access to the actual player rating histories, so “unmodified WHR” (in the previous section) means the ratings I inferred using the standard WHR model, using only this dataset.</p>
+<p>Breakdown of uneven games in the dataset:</p>
+<div class="cell page-columns page-full" data-execution_count="53">
+<div id="fig-game-counts" class="quarto-figure quarto-figure-center column-body-outset anchored">
+<figure class="figure">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">Rating of best player of small team →</th>
+<th colspan="2" data-quarto-table-cell-role="th" data-halign="left">&lt; 1800 Elo</th>
+<th colspan="2" data-quarto-table-cell-role="th" data-halign="left">[1800; 2200]</th>
+<th colspan="2" data-quarto-table-cell-role="th" data-halign="left">&gt; 2200 Elo</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th"></th>
+<th colspan="2" data-quarto-table-cell-role="th" data-halign="left">↓ winner ↓</th>
+<th colspan="2" data-quarto-table-cell-role="th" data-halign="left">↓ winner ↓</th>
+<th colspan="2" data-quarto-table-cell-role="th" data-halign="left">↓ winner ↓</th>
+</tr>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Large</th>
+<th data-quarto-table-cell-role="th">Small</th>
+<th data-quarto-table-cell-role="th">Large</th>
+<th data-quarto-table-cell-role="th">Small</th>
+<th data-quarto-table-cell-role="th">Large</th>
+<th data-quarto-table-cell-role="th">Small</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">Size</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1v2</td>
+<td>87</td>
+<td>28</td>
+<td>23</td>
+<td>14</td>
+<td>5</td>
+<td>3</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">2v3</td>
+<td>82</td>
+<td>31</td>
+<td>52</td>
+<td>39</td>
+<td>17</td>
+<td>16</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">3v4</td>
+<td>89</td>
+<td>34</td>
+<td>97</td>
+<td>69</td>
+<td>39</td>
+<td>36</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">4v5</td>
+<td>50</td>
+<td>23</td>
+<td>108</td>
+<td>79</td>
+<td>115</td>
+<td>94</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">5v6</td>
+<td>38</td>
+<td>12</td>
+<td>179</td>
+<td>100</td>
+<td>318</td>
+<td>234</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">6v7</td>
+<td>15</td>
+<td>5</td>
+<td>134</td>
+<td>94</td>
+<td>278</td>
+<td>177</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">7v8</td>
+<td>17</td>
+<td>9</td>
+<td>127</td>
+<td>81</td>
+<td>307</td>
+<td>253</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">8v9+</td>
+<td>18</td>
+<td>14</td>
+<td>298</td>
+<td>216</td>
+<td>1626</td>
+<td>1451</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+<figcaption class="figure-caption">Figure&nbsp;1: Uneven game counts</figcaption>
+</figure>
+</div>
+</div>
+</section>
+<section id="models" class="level1 page-columns page-full">
+<h1>Models</h1>
+<p>If not already familiar with it, you might want to look at <a href="#sec-whr-like">Section&nbsp;5.2</a> and <a href="#sec-whr-prior">5.3</a> for the standard (unadjusted) WHR model.</p>
+<section id="simple-adjusted-model" class="level2">
+<h2 class="anchored" data-anchor-id="simple-adjusted-model">Simple adjusted model</h2>
+<p>Since the rating averaging with no regard to team size seems wrong, I extended the model by introducing a new parameter which I called <code>epad</code> (extra player advantage), such that if team 1 has one more player than team 2, and if <span class="math inline">\(r := \text{team 1 natural rating} - \text{team 2 natural rating}\)</span>: <span class="math display">\[P(\text{team 1 wins} | r) = \text{sigmoid}(r + \textbf{epad}) \equiv \frac{1}{1+\exp(-(r + \textbf{epad}))}\]</span> so the team with one more player is simply treated as if it had <code>epad</code> more rating than it actually has. Unadjusted WHR is the special case when <code>epad = 0</code>.</p>
+<p>I expected the advantage size to be different for 1v2, 2v3 etc, so <code>epad</code> is actually an array of parameters, one for each uneven teams size (as mentioned, games with a player count difference &gt; 1 were dropped). Since I didn’t expect much of an effect for large teams, I made 8v9 and higher all share a single parameter <code>epad["8v9+"]</code>, with an additional assumption that the effect decreases linearly with the size of the smaller team <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
+<p>I used a weakly informative prior for each epad: <span class="math display">\[\text{epad} \sim \text{Normal}(\text{mean} = 0, \text{sdev} = 1000 \text{ Elo})\]</span> which represents a belief like “I have no idea if the larger team has an advantage or a disadvantage, but the effect is probably less than 2000 Elo”. (That’s suppsosed to be a somewhat “objective” prior; my actual personal prior is that the effect is positive<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. While it’s true that the larger team has no material advantage (other than more starting position choices), APM matters.)</p>
+<div class="cell" data-execution_count="117">
+<div class="cell-output cell-output-display">
+<p><img src="posting1_files/figure-html/cell-11-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+<section id="best-player-of-smaller-team---dependent-model" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="best-player-of-smaller-team---dependent-model">Best Player of Smaller Team - dependent model</h2>
+<div class="page-columns page-full"><p><span class="citation" data-cites="Sprung">@Sprung</span> plausibly suggested to discriminate by the rating of the Best Player of the Smaller Team (BPST), because they are the one with the double comm. In this second model, <code>epad</code> is a 2d array indexed by both team sizes and rating class, for which I used just “high rating” and “low rating” (I think the data would get too thin with more). I then used a smoothened version of <code>if BPST_Elo &lt; 2000 then epad_low else epad_high</code> as follows. Let <em>b</em> be the Elo of the BPST, then define the “Rating highness” as:</p><div class="no-row-height column-margin column-container"><span class="">The calculation of the “best” player rating actually uses a smooth approximation to <code>max</code>, to keep the model differentiable.</span></div></div>
+<p><span class="math display">\[ \text{rh}(b) := \text{sigmoid}\left(\frac{b - 2000}{200}\right) \]</span> <span class="math display">\[
+  P(\text{team 1 wins } | r, b) = \text{sigmoid}\left( r + \text{rh}(b) \cdot \text{epad}_\text{high} + (1 - \text{rh}(b)) \cdot \text{epad}_\text{low} \right)
+\]</span> The BPST model uses the same prior for each epad as the simple model.</p>
+<div class="cell page-columns page-full" data-execution_count="106">
+<div class="cell-output cell-output-display column-body-outset">
+<p><img src="posting1_files/figure-html/cell-13-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>Results for the joint models:</p>
+<div class="cell page-columns page-full" data-execution_count="158">
+<div class="cell-output cell-output-display column-page">
+<p><img src="posting1_files/figure-html/cell-15-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>Looking at the <a href="#fig-game-counts">game count table</a>, the large uncertainty for the 2500 Elo player in 1v2 and 2v3, and for the 1500 Elo player in 6v7 and bigger are probably due to insufficient sample size. Naturally, the larger the team, the higher-rated its best player tends to be.</p>
+<p>In 3v4, and 5v6, the means of all three conditions are oddly close together.</p>
+<p>For most of the other sizes, the effect is susprisingly larger if the BPST is high-rated. This means that, say, [2500, 2100] vs [2700, 2100, 2100] (both averages = 2300) is supposedly more in favor of the large team than a similar game shifted down 1000 Elo ([1500, 1100] vs [1700, 1100, 1100]) is. I don’t have an explanation for any of this.</p>
+<p>Results for the fixed-rating models:</p>
+<div class="cell page-columns page-full" data-execution_count="163">
+<div class="cell-output cell-output-display column-page">
+<p><img src="posting1_files/figure-html/cell-16-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>Again a bit weird.</p>
+</section>
+<section id="joint-models-vs-fixed-ratings-models" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="joint-models-vs-fixed-ratings-models">Joint models vs fixed-ratings models</h2>
+<p>I tried each of the models with two different approaches:</p>
+<dl>
+<dt>Joint models</dt>
+<dd>
+Simultaneously infer both <code>epad</code> and the ratings of the players; both are parameters in the same model.
+</dd>
+<dt>Fixed-rating models</dt>
+<dd>
+Infer the ratings using the unadjusted model. Take either the posterior mean or the MAP player ratings and use these as fixed ratings in a second model whose only parameters are the <code>epad</code>s.
+</dd>
+</dl>
+<p>One could argue that the joint models are the more relevant ones if we want to use the <code>epad</code> both for balancing and for determining ratings, and the fixed models are more relevant if we want to use <code>epad</code> only for balancing. In the former case, assuming <code>epad</code> is found to be positive, players on the smaller team will gain more / lose less Elo on win / loss than they otherwise would.</p>
+<p>In any case, the advantage of the fixed models is much faster development iteration; the sampling of the joint models took about 150 minutes each and the resulting traces are 4 GB each.</p>
+<p>Concerning the fixed models, the difference between fixing to mean or MAP was minimal (but the MAP does not require sampling and takes just seconds to compute; the full posterior over which the mean is taken takes hours as mentioned):</p>
+<div class="cell page-columns page-full" data-execution_count="134">
+<div class="cell-output cell-output-display column-body-outset">
+<p><img src="posting1_files/figure-html/cell-17-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+<section id="model-comparison" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="model-comparison">Model comparison</h2>
+<p>To estimate the out-of-sample predictive performance of the different models, I used something called PSIS-LOO, which is some very clever method for estimating the Leave-One-Out cross-validation performance (i.e.&nbsp;withholding one datapoint, training the model on all the others, then trying to predict the withheld point) for all the datapoints (games) without actually refitting the model N times.</p>
+<section id="joint-models" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="joint-models">Joint models</h3>
+<div class="cell page-columns page-full" data-execution_count="179">
+<div class="cell-output cell-output-display column-page" data-execution_count="179">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">rank</th>
+<th data-quarto-table-cell-role="th">elpd_loo</th>
+<th data-quarto-table-cell-role="th">p_loo</th>
+<th data-quarto-table-cell-role="th">elpd_diff</th>
+<th data-quarto-table-cell-role="th">weight</th>
+<th data-quarto-table-cell-role="th">se</th>
+<th data-quarto-table-cell-role="th">dse</th>
+<th data-quarto-table-cell-role="th">warning</th>
+<th data-quarto-table-cell-role="th">scale</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Ratings &amp; advantage jointly fitted, BPST-adjusted model</td>
+<td>0</td>
+<td>-14662.093146</td>
+<td>2116.534525</td>
+<td>0.000000</td>
+<td>0.673899</td>
+<td>48.276185</td>
+<td>0.000000</td>
+<td>True</td>
+<td>log</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Ratings &amp; advantage jointly fitted, simple adjusted model</td>
+<td>1</td>
+<td>-14667.054129</td>
+<td>2118.937944</td>
+<td>4.960982</td>
+<td>0.175391</td>
+<td>48.293260</td>
+<td>6.328338</td>
+<td>True</td>
+<td>log</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Ratings &amp; advantage jointly fitted, unadjusted WHR model</td>
+<td>2</td>
+<td>-14739.315606</td>
+<td>2115.120891</td>
+<td>77.222460</td>
+<td>0.150711</td>
+<td>46.646162</td>
+<td>15.958799</td>
+<td>True</td>
+<td>log</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>The meaning of these columns is documented <a href="https://python.arviz.org/en/stable/api/generated/arviz.compare.html#arviz-compare">here</a>, but the main point is also expressed in this chart:</p>
+<div class="cell page-columns page-full" data-execution_count="194">
+<div class="cell-output cell-output-display column-page">
+<p><img src="posting1_files/figure-html/cell-20-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>The BPST-adjusted model scores very slightly higher than the simple adjusted model, but both are clearly better than the unadjusted model.</p>
+</section>
+<section id="fixed-rating-models" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="fixed-rating-models">Fixed-rating models</h3>
+<p>The unadjusted fixed-rating models would have 0 parameters, which the library didn’t like, so I kept the <code>epad</code> parameters but forced its value to be tiny (+- 1 Elo) for the “unadjusted”.</p>
+<div class="cell page-columns page-full" data-execution_count="198">
+<div class="cell-output cell-output-display column-page" data-execution_count="198">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">rank</th>
+<th data-quarto-table-cell-role="th">elpd_loo</th>
+<th data-quarto-table-cell-role="th">p_loo</th>
+<th data-quarto-table-cell-role="th">elpd_diff</th>
+<th data-quarto-table-cell-role="th">weight</th>
+<th data-quarto-table-cell-role="th">se</th>
+<th data-quarto-table-cell-role="th">dse</th>
+<th data-quarto-table-cell-role="th">warning</th>
+<th data-quarto-table-cell-role="th">scale</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Ratings fixed to mean of standard WHR, simple adjusted model</td>
+<td>0</td>
+<td>-4248.331918</td>
+<td>7.012583</td>
+<td>0.000000</td>
+<td>0.734426</td>
+<td>21.993787</td>
+<td>0.000000</td>
+<td>False</td>
+<td>log</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Ratings fixed to mean of standard WHR, BPST-adjusted model</td>
+<td>1</td>
+<td>-4250.847614</td>
+<td>14.378877</td>
+<td>2.515697</td>
+<td>0.265574</td>
+<td>22.187316</td>
+<td>3.323622</td>
+<td>False</td>
+<td>log</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Ratings fixed to MAP of standard WHR, simple adjusted model</td>
+<td>2</td>
+<td>-4300.795784</td>
+<td>6.941516</td>
+<td>52.463866</td>
+<td>0.000000</td>
+<td>20.441711</td>
+<td>2.327563</td>
+<td>False</td>
+<td>log</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Ratings fixed to MAP of standard WHR, BPST-adjusted model</td>
+<td>3</td>
+<td>-4303.209430</td>
+<td>14.301572</td>
+<td>54.877512</td>
+<td>0.000000</td>
+<td>20.816522</td>
+<td>4.089969</td>
+<td>False</td>
+<td>log</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">Ratings fixed to mean of standard WHR, unadjusted WHR model</td>
+<td>4</td>
+<td>-4308.140811</td>
+<td>0.011841</td>
+<td>59.808893</td>
+<td>0.000000</td>
+<td>19.694596</td>
+<td>10.781529</td>
+<td>False</td>
+<td>log</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">Ratings fixed to MAP of standard WHR, unadjusted WHR model</td>
+<td>5</td>
+<td>-4362.149017</td>
+<td>0.012061</td>
+<td>113.817100</td>
+<td>0.000000</td>
+<td>17.712600</td>
+<td>10.859103</td>
+<td>False</td>
+<td>log</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full" data-execution_count="199">
+<div class="cell-output cell-output-display column-page">
+<p><img src="posting1_files/figure-html/cell-23-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>Similar situation, except this time the simple model is slightly ahead. Also, the mean ratings appear to be more predictive than MAP ratings, idk.</p>
+<p>The scores of the joint models and the fixed-rating models are uncomparable because the former try to predict all games in the dataset while the latter only look at the uneven-sized games.</p>
+<p>Due to the somewhat erratic results with the BPST models (pointing to possible implementation error) and the similar PSIS-LOO scores, I went with the simple models as the “main result”.</p>
+</section>
+</section>
+</section>
+<section id="implementation" class="level1 page-columns page-full">
+<h1>Implementation</h1>
+<p>The models were implemented using the Python library <a href="https://www.pymc.io/">PyMC</a> and the results analyzed using <a href="https://python.arviz.org/">ArviZ</a>. Samples from the posterior were taken using the NUTS sampler (No U-Turn Sampler, a type of Hamiltonian Monte Carlo sampler, where in my very basic understanding, you reinterpret your posterior density function as a physical potential and let a thermal particle bounce around in it.)</p>
+<p>The parameters of the implemented model are technically not the ratings, but the <em>increments</em> of the ratings from day to day, in addition to the first-day rating (rating increments are much less correlated than ratings; making the ratings be parameters directly caused incredibly slow sampling).</p>
+<p>Summing up the increments to get ratings was tough to optimize because different players have different numbers of days played, but vectorized functions such as <code>cumsum</code> expect to sum equally many numbers in each batch. Tried a bunch of things, but in the end went with a sparse matrix (containing only 0s and 1s) to turn the increments into ratings.</p>
+<p>I took 8000 samples for each of the joint models and 32k for the fixed-rating ones:</p>
+<div class="cell page-columns page-full" data-execution_count="206">
+<div class="cell-output cell-output-display column-page" data-execution_count="206">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">model</th>
+<th data-quarto-table-cell-role="th">chains</th>
+<th data-quarto-table-cell-role="th">draws_per_chain</th>
+<th data-quarto-table-cell-role="th">tuning_steps_per_chain</th>
+<th data-quarto-table-cell-role="th">sampling_time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>Ratings &amp; advantage jointly fitted, unadjusted...</td>
+<td>4</td>
+<td>2000</td>
+<td>1000</td>
+<td>9148.117072</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>Ratings &amp; advantage jointly fitted, simple adj...</td>
+<td>4</td>
+<td>2000</td>
+<td>1000</td>
+<td>9579.752359</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>Ratings &amp; advantage jointly fitted, BPST-adjus...</td>
+<td>4</td>
+<td>2000</td>
+<td>1000</td>
+<td>10170.415352</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>Ratings fixed to mean of standard WHR, unadjus...</td>
+<td>16</td>
+<td>2000</td>
+<td>1000</td>
+<td>15.865014</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>Ratings fixed to mean of standard WHR, simple ...</td>
+<td>16</td>
+<td>2000</td>
+<td>1000</td>
+<td>14.282327</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>Ratings fixed to mean of standard WHR, BPST-ad...</td>
+<td>16</td>
+<td>2000</td>
+<td>1000</td>
+<td>25.338659</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6</td>
+<td>Ratings fixed to MAP of standard WHR, unadjust...</td>
+<td>16</td>
+<td>2000</td>
+<td>1000</td>
+<td>16.095270</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
+<td>Ratings fixed to MAP of standard WHR, simple a...</td>
+<td>16</td>
+<td>2000</td>
+<td>1000</td>
+<td>14.339227</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8</td>
+<td>Ratings fixed to MAP of standard WHR, BPST-adj...</td>
+<td>16</td>
+<td>2000</td>
+<td>1000</td>
+<td>26.411861</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="sec-bg" class="level1 page-columns page-full">
+<h1>Background</h1>
+<section id="bayes" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="bayes">Bayes</h2>
+<p>WHR is a Bayesian model, as are the extensions of it in this post. Bayesianism interprets probabilities as <a href="https://en.wikipedia.org/wiki/Bayesian_probability">representing a state of knowledge or as quantification of a personal belief.</a>. So you can say something like “I think there’s a 20% probability that Krow will be buffed in ZK 1.11.7” even though this is not a repeatable process such as throwing dice, in which case “20%” would represent the long-run average frequency.</p>
+<p>In Bayesian inference, we are interested in the values of some unknown parameters (in WHR: The unobservable true rating of each player for each day, and here also the size of the extra player advantage) and start by formulating our belief (before having seen the data) about what the values of the parameters could possibly be; this probability distribution is called the prior (see <a href="#sec-whr-prior">below</a> for WHR’s prior). We also need to specify a likelihood function, which states the probability of making some specific observation (here: game outcome) if the unknown parameters had some particular value.</p>
+<div class="page-columns page-full"><p>Given the prior, the likelihood, and the data/evidence, we can use <a href="https://en.wikipedia.org/wiki/Bayesian_inference#Formal_explanation">Bayes’ theorem</a> to “update” our belief about what the most likely values of the parameters are; the updated probability distribution is called the posterior.</p><div class="no-row-height column-margin column-container"><span class="">The posterior is a probability distribution, but only a single rating value is shown in ZK; AFAIK, this is the value with the highest posterior probability density (also known as the MAP, maximum a posteriori).</span></div></div>
+</section>
+<section id="sec-whr-like" class="level2">
+<h2 class="anchored" data-anchor-id="sec-whr-like">WHR’s likelihood function</h2>
+<p>For WHR, the likelihood function is taken to be:</p>
+<p><span class="math display">\[\text{Let } R := \text{team 1 Elo} - \text{team 2 Elo, then}\]</span> <span class="math display">\[P(\text{team 1 wins} | R) = \frac{1}{1 + 10^\frac{-R}{400}}\]</span></p>
+<p>Of course, the win chance converges to 1 as <span class="math inline">\(R \to +\infty\)</span>, to 0 as <span class="math inline">\(R \to -\infty\)</span>, and is 0.5 if <span class="math inline">\(R=0\)</span>.</p>
+<div class="cell" data-execution_count="52">
+<div class="cell-output cell-output-display">
+<p><img src="posting1_files/figure-html/cell-25-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>It is mathematically convenient to measure the ratings on a scale called “natural rating”<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> instead of Elo, where <span class="math display">\[\text{1 natural rating} = \frac{400}{\ln(10)}\text{ Elo} \approx 174 \text{ Elo}\]</span></p>
+<p>Then the likelihood is just the standard logistic aka sigmoid function:</p>
+<p><span class="math display">\[\text{Let } r := \text{team 1 natural rating} - \text{team 2 natural rating, then}\]</span> <span class="math display">\[P(\text{team 1 wins} | r) = \frac{1}{1 + \exp(-r)} =: \operatorname{sigmoid}(r)\]</span></p>
+<p>Team ratings are averaged:</p>
+<p><span class="math display">\[\text{Team 1 rating} = \text{average of the ratings of the players on team 1}\]</span> <span class="math display">\[\text{Team 2 rating} = \text{average of the ratings of the players on team 2}\]</span></p>
+</section>
+<section id="sec-whr-prior" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="sec-whr-prior">WHR’s prior</h2>
+<section id="first-day-rating" class="level3">
+<h3 class="anchored" data-anchor-id="first-day-rating">First day rating</h3>
+<p>The prior used by WHR for the first-day rating of a new player is induced by assuming that the player had one fictional win and one fictional loss against a virtual 1500 Elo (0 natural rating) player. Since this is already a virtual Bayesian update, it raises the question of what the “prior of the prior” is, which I couldn’t find answered in the paper, but is presumably a flat improper prior. For implementation convenience, I used a broad normal distribution (sigma = 2000 Elo) instead of the flat prior, but the difference should be minimal.</p>
+<div class="cell" data-execution_count="98">
+<div class="cell-output cell-output-display">
+<p><img src="posting1_files/figure-html/cell-26-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+<section id="rating-change-between-days" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="rating-change-between-days">Rating change between days</h3>
+<p>The prior used by Zero-K-WHR for the rating <em>change</em> of a player from one day to the next is a normal distribution with variance equal to: <span class="math display">\[ \text{rating change of player P from day } d_1 \text{ to } d_2 \sim \text{Normal}(0, \sigma),\]</span> <span class="math display">\[ \sigma^2  = w \cdot 500 \text{ Elo}^2 + (d_2 - d_1) V \text{ Elo}^2\]</span> where <span class="math display">\[w := \text{weight of games P played on } d_2\]</span> <span class="math display">\[\text{where "weight" of a game = } \frac{1}{\text{number of players on P's team}}\]</span> <span class="math display">\[(\text{so 1 for 1v1, } \frac{1}{2} \text{for 2v2 etc.)}\]</span> <span class="math display">\[W := \text{total weight of all games P played up to } d_1\]</span> <span class="math display">\[V := \frac{200000}{W + 400}\]</span></p>
+<p>The last part means that a new player starts out with a variance of <span class="math inline">\(\frac{200000}{400} = 500\)</span> square Elo per day, but the variance per day slowly decreases to zero as they play more games. The additional variance per game weight remains constant though.</p>
+<p>These constants are defined <a href="https://github.com/ZeroK-RTS/Zero-K-Infrastructure/blob/7e8374e233a593208311f85a79cf6926cf4bb58f/Shared/PlasmaShared/GlobalConst.cs#L128">here</a>.</p>
+<p>Some example values for the standard deviation of the prior of rating change from day <span class="math inline">\(d_1\)</span> to <span class="math inline">\(d_2\)</span> for a player with W = 100 (that is 100 1v1s or 1000 10v10s played in total):</p>
+<div class="cell page-columns page-full" data-execution_count="111">
+<div class="cell-output cell-output-display column-body">
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">σ [Elo]</th>
+<th data-quarto-table-cell-role="th">σ [Elo]</th>
+<th data-quarto-table-cell-role="th">σ [Elo]</th>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">d2 - d1: Days since last game --&gt;</th>
+<th data-quarto-table-cell-role="th">1</th>
+<th data-quarto-table-cell-role="th">10</th>
+<th data-quarto-table-cell-role="th">100</th>
+</tr>
+<tr class="header">
+<th data-quarto-table-cell-role="th">w : Weight of games played on day d2</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0.1</td>
+<td>21.2</td>
+<td>63.6</td>
+<td>200.1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">0.3</td>
+<td>23.5</td>
+<td>64.4</td>
+<td>200.4</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1.0</td>
+<td>30.0</td>
+<td>67.1</td>
+<td>201.2</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3.0</td>
+<td>43.6</td>
+<td>74.2</td>
+<td>203.7</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">10.0</td>
+<td>73.5</td>
+<td>94.9</td>
+<td>212.1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">30.0</td>
+<td>124.1</td>
+<td>137.8</td>
+<td>234.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>WHR is assuming that the skill of a player <em>probably</em> doesn’t change a huge amount in a short time and with few games played. It can be convinced of the opposite though, given strong enough evidence.</p>
+<p>As an example for the importance of the prior for rating changes, consider a player who won all their games yesterday and lost all their games today. The maximum likelihood explanation would be that their rating was <span class="math inline">\(+\infty\)</span> (or the maximum technically allowed rating) yesterday and <span class="math inline">\(-\infty\)</span> today. This would make the likelihood of the observations 100%. But the prior says that player skill does generally not change that quickly, and in the end the assigned rating is a compromise between likelihood and prior probability. Their rating was higher yesterday than today, but not so extremely.</p>
+<p>From a design perspective, these priors could be modified to achieve some desired goal (such as slower or faster rating changes) while staying within the same Bayesian framework.</p>
+</section>
+</section>
+</section>
+<section id="top-100" class="level1 page-columns page-full">
+<h1>Top 100</h1>
+<p>As a sort of plausibility check, here are the Top 100 sorted by the posterior mean of rating in the unadjusted model (only last available day for each player). It’s unsurprising that there’s little change in Elo in the adjusted models, since frequent players should have no systematic tendency to be either on the smaller or the larger team, so the Elo gained/lost from the adjustment for being in the small/large team should cancel out.</p>
+<p>Thin lines are 95% highest density intervals, thick lines are interquartile ranges.</p>
+<div class="cell page-columns page-full" data-execution_count="215">
+<div class="cell-output cell-output-display column-page">
+<p><img src="posting1_files/figure-html/cell-29-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>For 8v9 and bigger, I assumed: <span class="math inline">\(P(\text{team 1 wins} | r) = \text{sigmoid}\left(r + \text{epad}_\text{8v9+} \cdot \frac{8}{\text{size of smaller team}}\right)\)</span> Maybe the effect falloff for full pots should be bigger though (or I could just model each size up to 15v16 separately).<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>And that the <code>epad</code>s for different size games are somewhat correlated, whereas they are independent in the “objective” prior used here.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>The origin of the scale is also shifted; 0 natural rating corresponds to 1500 Elo (this is like degree C vs F for temperature), but this doesn’t matter when only computing the difference of two ratings. The <em>only</em> place where we aren’t just looking at differences is in the fictional win and loss on the first day vs.&nbsp;a 1500 Elo = 0 natural rating player. <span class="math display">\[\text{A difference of r natural rating units} = \text{a difference of } \frac{400 r}{\ln(10)} \text{Elo}\]</span> <span class="math display">\[r \text{ natural rating (absolute) } = 1500 + \frac{400 r}{\ln(10)} \text{Elo (absolute)}\]</span><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+          // default icon
+          link.classList.add("external");
+      }
+    }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
