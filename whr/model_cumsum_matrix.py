@@ -136,13 +136,13 @@ def createCumsumMatrixModel(da : PreprocessedData,
 
 
 # Specific models with the same settings for comparison
-def createUnadjustedCumsumMatrixModel(da: PreprocessedData):
+def createUnadjustedCumsumMatrixModel(da: PreprocessedData) -> WHRModel:
     return createCumsumMatrixModel(da, separateVirtualGames=True, extraPlayerAdjustment=ExtraPlayerAdvantageType.NONE, useOutcomesPotential=False)
 
-def createSimpleAdjustedModel(da: PreprocessedData):
+def createSimpleAdjustedModel(da: PreprocessedData) -> WHRModel:
     return createCumsumMatrixModel(da, separateVirtualGames=True,
                                    extraPlayerAdjustment=ExtraPlayerAdvantageType.BY_TEAM_SIZE, useOutcomesPotential=False)
 
-def createBPSTAdjustedModel(da: PreprocessedData):
+def createBPSTAdjustedModel(da: PreprocessedData) -> WHRModel:
     return createCumsumMatrixModel(da, separateVirtualGames=True,
                                    extraPlayerAdjustment=ExtraPlayerAdvantageType.BY_TEAM_SIZE_AND_BPST, useOutcomesPotential=False)

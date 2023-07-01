@@ -6,5 +6,7 @@ __pycache__/
 /env/
 /.quarto/
 /posting1.html
+/posting1_v2.html
 /posting1_files/
+/posting1_v2_files/
 .ipynb_checkpoints/posting1-checkpoint.ipynb

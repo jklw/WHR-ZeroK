@@ -18,7 +18,12 @@ class RatingVector:
         Index into the vector
     """
 
-advantageClasses = np.array(['1v2', '2v3', '3v4', '4v5', '5v6', '6v7', '7v8', '8v9+'])
+advantageClasses = np.array([
+    '1v2', '2v3', '3v4', 
+    '4v5', '5v6', '6v7', 
+    '7v8', '8v9', '9v10', 
+    '10v11', '11v12', '12v13',
+    '13v14', '14v15', '15v16+'])
 ratingclassCoords = np.array(['low rating', 'high rating'])
 
 class ExtraPlayerAdvantageType(enum.Enum):
@@ -401,7 +406,7 @@ class WHRModel:
         map1 = pm.find_MAP(model=self.model, return_raw=False)
         self.MAP_ratings = pd.DataFrame({'rating':map1['ratings']}, index=self.ratingIxLookup.index.sort_values())
         self.MAP_ratings.to_pickle(self.MAPFileName())
-        return self.MAP_Ratings
+        return self.MAP_ratings
 
     def loadMAP(self) -> 'WHRModel':
         self.MAP_ratings = pd.read_pickle(self.MAPFileName())

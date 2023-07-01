@@ -1,19 +1,23 @@
 from whr.basic import *
 
-DEFAULT_MONTHS = np.array([str(y) for y in range(2017,2022)] + [f'2022-{i:02d}' for i in range(5,13)] + [f'2023-{i:02d}' for i in range(1,6)])
+DEFAULT_MONTHS = np.array([str(y) for y in range(2017,2022)] + [f'2022-{i:02d}' for i in range(1,13)] + [f'2023-{i:02d}' for i in range(1,6)])
 # DEFAULT_MONTHS =  np.array([f'2023-{i:02d}' for i in range(1,5)])
 
 STATIC_DATA_DATE='2023-06-10'
 
-def readZklaBattles(months) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-        Returns: games, gamePlayers
-    """
+def readZklaMaps() -> pd.DataFrame:
     with gzip.open('data/%s-maps.json' % STATIC_DATA_DATE) as file:
         maps = pd.DataFrame(json.load(file))
     maps.set_index('map_id', inplace=True)
+    return maps
 
-    monthResults = [readZklaBattlesFile(month, maps) for month in months]
+def readZklaBattles(months, doPreFilter : bool) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+        Returns: games, gamePlayers
+    """
+    maps = readZklaMaps()
+
+    monthResults = [readZklaBattlesFile(month, maps, doPreFilter=doPreFilter) for month in months]
     games = pd.concat([t[0] for t in monthResults])
     gamePlayers = pd.concat([t[1] for t in monthResults])
 
@@ -29,7 +33,13 @@ def readAndFilterZklaBattles(months) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
         Returns: games, gamePlayers
     """
-    games, gamePlayers = readZklaBattles(months)
+    games, gamePlayers = readZklaBattles(months, doPreFilter=True)
+    return filterZklaBattles(games, gamePlayers)
+
+def filterZklaBattles(games : pd.DataFrame, gamePlayers : pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+        Returns: games, gamePlayers
+    """
 
     def dropGames(dropees : pd.Index, because : str, logLevel = logging.WARNING, playersToo=True):
         if(len(dropees) > 0):
@@ -59,7 +69,7 @@ def readAndFilterZklaBattles(months) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     return games, gamePlayers
 
-def readZklaBattlesFile(month : str, maps : DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def readZklaBattlesFile(month : str, maps : DataFrame, doPreFilter : bool) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
         Returns: games, gamePlayers
     """
@@ -71,7 +81,10 @@ def readZklaBattlesFile(month : str, maps : DataFrame) -> Tuple[pd.DataFrame, pd
                     & (games.duration_sec >= 20) \
                     & (games.is_autohost_teams != 0)
     # games['preFilter'] = preFilter
-    games = games[preFilter]
+    if doPreFilter:
+        games = games[preFilter]
+    else:
+        games['preFilter'] = preFilter
 
     games['started'] = pd.to_datetime(games.started_sec, unit='s')
     del games['started_sec']

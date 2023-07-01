@@ -50,6 +50,7 @@ def getBPSTElo(da : PreprocessedData, ratings : pat.Series[float]) -> pat.Series
 
 def createGameCountByBPSTSummaryTable(da : PreprocessedData, ratings : pat.Series[float]):
         # .assign(highness = lambda d: models_shared.eloHighness(models['meanBPST'].idata, d.BPST_Elo)) \
+    gameCounts : pd.DataFrame
     gameCounts = getBPSTElo(da, ratings).to_frame("BPST_Elo") \
         .join(da.games[['winnerCount','loserCount']]) \
         .assign(
@@ -62,7 +63,7 @@ def createGameCountByBPSTSummaryTable(da : PreprocessedData, ratings : pat.Serie
         )
 
     gc2 : pd.DataFrame    
-    gc2 = gameCounts.groupby(['advc','cat', 'smallWon'])\
+    gc2 = gameCounts.groupby(['advc','cat', 'smallWon'], sort=False)\
         .pipe(lambda d: typing.cast(pd.DataFrame, typing.cast(pd.Series, d.size()).to_frame('count'))
             # .assign(highness = d.highness.sum()/d.size())
             ) \
@@ -71,7 +72,12 @@ def createGameCountByBPSTSummaryTable(da : PreprocessedData, ratings : pat.Serie
 
     gc2.index.set_names(['Size', 'Rating of best player of small team →'], inplace=True)
     gc2.columns.set_names(None, level=1, inplace=True)
-    return gc2.unstack( 'Rating of best player of small team →').reorder_levels([2,0,1], axis=1).sort_index(axis=1)
+
+    advcSorter = { x:i for i,x in enumerate(advantageClasses)}
+
+    return gc2.unstack( 'Rating of best player of small team →').reorder_levels([2,0,1], axis=1).sort_index(axis=1) \
+        .sort_index(key = lambda advcs: advcs.map(lambda x: advcSorter[x]))
+
 
 
 def putLegendOnTopOfFigure(ax : plt.Axes, bbox: Tuple[float,float]):
